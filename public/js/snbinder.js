@@ -157,48 +157,51 @@ var SNBinder = (function () {
     }, {
         key: "post",
         value: function post(url, params, isJson, callback) {
-            if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
-                window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
-            }
-
-            $.ajax({
-                type: "POST",
-                url: url,
-                data: jQuery.param(params ? params : {}),
-                retry: 0,
-                retryLimit: 3,
-                success: function success(data) {
-                    var json = null;
-                    if (isJson) {
-                        json = SNBinder.evaluate(data);
-                        if (json.login_required) {
-                            return SNBinder.handlers().login(json);
-                        }
-                    }
-                    if (isJson) {
-                        callback(json, data);
-                    } else {
-                        callback(data);
-                    }
-                },
-                error: function error(XMLHttpRequest, textStatus, errorThrown) {
-                    var json = null;
-                    if (XMLHttpRequest.status == 401 && isJson) {
-                        json = SNBinder.evaluate(XMLHttpRequest.responseText);
-                        if (json.login_required) {
-                            return SNBinder.handlers().login(json);
-                        }
-                    }
-                    if (textStatus == 'timeout') {
-                        this.retry++;
-                        if (this.retry < this.retryLimit) {
-                            $.ajax(this);
-                            return;
-                        }
-                    }
-                    SNBinder.handlers().error("post", url);
+            (function () {
+                if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
+                    window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
                 }
-            });
+                alert("AA");
+
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: jQuery.param(params ? params : {}),
+                    retry: 0,
+                    retryLimit: 3,
+                    success: function success(data) {
+                        var json = null;
+                        if (isJson) {
+                            json = SNBinder.evaluate(data);
+                            if (json.login_required) {
+                                return SNBinder.handlers().login(json);
+                            }
+                        }
+                        if (isJson) {
+                            callback(json, data);
+                        } else {
+                            callback(data);
+                        }
+                    },
+                    error: function error(XMLHttpRequest, textStatus, errorThrown) {
+                        var json = null;
+                        if (XMLHttpRequest.status == 401 && isJson) {
+                            json = SNBinder.evaluate(XMLHttpRequest.responseText);
+                            if (json.login_required) {
+                                return SNBinder.handlers().login(json);
+                            }
+                        }
+                        if (textStatus == 'timeout') {
+                            this.retry++;
+                            if (this.retry < this.retryLimit) {
+                                $.ajax(this);
+                                return;
+                            }
+                        }
+                        SNBinder.handlers().error("post", url);
+                    }
+                });
+            })();
         } // end of post
 
     }, {

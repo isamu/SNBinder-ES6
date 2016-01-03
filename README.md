@@ -1,5 +1,7 @@
 # SNBinder-ES6
 
+Forked https://github.com/snakajima/SNBinder 
+
 ## setup npm
 
  $ npm install

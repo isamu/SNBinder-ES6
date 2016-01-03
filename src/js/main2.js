@@ -11,5 +11,11 @@ snbinder.get_named_sections("/templates.htm", null, function(sections) {
     snbinder.post('/api/test', { v:Date.now() }, true, function(json, data) {
 	$("#snbind2").html(SNBinder.bind(s_templates['test'], json, 0));
     });
+    snbinder.post('/api/test', { v:Date.now() }, true, function(json, data) {
+	$("#snbind3").html(SNBinder.bind(s_templates['test'], json, 0));
+    });
+    snbinder.post('/api/test', { v:Date.now() }, true, function(json, data) {
+	$("#snbind4").html(SNBinder.bind(s_templates['test'], json, 0));
+    });
 
 });

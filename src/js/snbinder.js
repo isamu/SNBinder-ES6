@@ -1,3 +1,20 @@
+/*!
+ * SNBinder JavaScript Library 
+ *
+ * Copyright (c) 2009 Satoshi Nakajima (Twitter: @snakajima, Blog:http://satoshi.blogs.com/uie)
+ * Licensed under the MIT license + "keep this comment block even if you modify it".
+ *
+ * SNBinder-ES6
+ * Copyright (c) 2016 Isamu Arimoto
+ *
+ * History:
+ *  02-12-2010 Created for the project "Entertain LA" (http://entertainla.com)
+ *  01-20-2011 Published as snbinder-0.5.3.js
+ *  01-03-2016 Forked SNBinder-ES6
+ *
+ */
+
+
 let instance = null;
 let s_templates = null;
 
@@ -126,48 +143,49 @@ class SNBinder {
     }
     post (url, params, isJson, callback) {
         if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
-            window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
+	    window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
         }
-	
+	    
         $.ajax({
-            type: "POST",
-            url: url,
-            data: jQuery.param(params ? params : {}),
+	    type: "POST",
+	    url: url,
+	    data: jQuery.param(params ? params : {}),
 	    retry : 0,
 	    retryLimit: 3,
-            success: function(data) {
+	    success: function(data) {
                 var json = null;
                 if (isJson) {
-                    json = SNBinder.evaluate(data);
-                    if (json.login_required) {
+		    json = SNBinder.evaluate(data);
+		    if (json.login_required) {
                         return SNBinder.handlers().login(json);
-                    }
+		    }
                 }
                 if (isJson) {
-                    callback(json, data);
+		    callback(json, data);
                 } else {
-                    callback(data);
+		    callback(data);
                 }
-            },
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
+	    },
+	    error: function (XMLHttpRequest, textStatus, errorThrown) {
 		var json = null;
 		if(XMLHttpRequest.status == 401 && isJson){
 		    json = SNBinder.evaluate(XMLHttpRequest.responseText);
-                    if (json.login_required) {
+		    if (json.login_required) {
                         return SNBinder.handlers().login(json);
-                    }
+		    }
 		}
 		if (textStatus == 'timeout') {
 		    this.retry++;
-                    if (this.retry < this.retryLimit) {
+		    if (this.retry < this.retryLimit) {
 			$.ajax(this);
 			return;
-                    }
+		    }
 		}
 		SNBinder.handlers().error("post", url);
-            }
+	    }
         });
     } // end of post
+
     compile (htm) {
         var _templatize = function(htm) {
             return '"' + htm.replace(/\"/g, "'")
@@ -232,7 +250,6 @@ class SNBinder {
 	let snbinder = SNBinder.get_instance();
 	return snbinder.set_cache(url, data);
     }
-
     // backward compatibility
     static init (_handlers = {}) {
 	return SNBinder.get_instance(_handlers);
