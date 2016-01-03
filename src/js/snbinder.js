@@ -85,124 +85,89 @@ class SNBinder {
                 callback(data);
             }
         } else {
-            (function(callback) {
-                var retry = 0;
-                var _attempt = function() {
-                    if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
-                        if (retry === 0) {
-                            retry++;
-                            window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
-                            return;
+            if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
+                window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
+            }
+	    
+            $.ajax({
+                type: "GET",
+                url: url,
+		retry : 0,
+		retryLimit: 3,
+                success: function(data) {
+                    var json = null;
+                    if (isJson) {
+                        json = SNBinder.evaluate(data);
+			if (json.login_required) {
+                            return SNBinder.handlers().login(json);
                         }
                     }
-		    
-                    $.ajax({
-                        type: "GET",
-                        url: url,
-                        success: function(data) {
-                            var json = null;
-                            if (isJson) {
-                                json = SNBinder.evaluate(data);
-				  if (json.login_required) {
-                                    return SNBinder.handlers().login(json);
-                                }
-                            }
-                            if (options.cache_result) {
-                                SNBinder.set_cache(url, data);
-                            }
-                            if (isJson) {
-                                callback(json, data);
-                            } else {
-                                callback(data);
-                            }
-                        },
-                        error: function () {
-                            if (retry < 3) {
-                                retry++;
-                                _attempt();
-                            } else {
-                                SNBinder.handlers().error("get", url);
-                            }
-                        }
-                    });
-                };
-                _attempt();
-            })(callback);
+                    if (options.cache_result) {
+                        SNBinder.set_cache(url, data);
+                    }
+                    if (isJson) {
+                        callback(json, data);
+                    } else {
+                        callback(data);
+                    }
+                },
+                error: function () {
+		    if (textStatus == 'timeout') {
+			this.retry++;
+			if (this.retry < this.retryLimit) {
+			    $.ajax(this);
+			    return;
+			}
+		    }
+                    SNBinder.handlers().error("get", url);
+                }
+            });
         }
     }
     post (url, params, isJson, callback) {
-        (function() {
-            var retry = 0;
-            var _attempt = function() {
-                if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
-                    if (retry === 0) {
-                        retry++;
-                        window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
-                        return;
+        if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
+            window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
+        }
+	
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: jQuery.param(params ? params : {}),
+	    retry : 0,
+	    retryLimit: 3,
+            success: function(data) {
+                var json = null;
+                if (isJson) {
+                    json = SNBinder.evaluate(data);
+                    if (json.login_required) {
+                        return SNBinder.handlers().login(json);
                     }
                 }
-
-                $.ajax({
-                    type: "POST",
-                    url: url,
-                    data: jQuery.param(params ? params : {}),
-                    success: function(data) {
-                        var json = null;
-                        if (isJson) {
-                            json = SNBinder.evaluate(data);
-                            if (json.login_required) {
-                                return SNBinder.handlers().login(json);
-                            }
-                        }
-                        if (isJson) {
-                            callback(json, data);
-                        } else {
-                            callback(data);
-                        }
-                    },
-                    error: function (XMLHttpRequest, textStatus, errorThrown) {
-			var json = null;
-			if(XMLHttpRequest.status == 401 && isJson){
-			    json = SNBinder.evaluate(XMLHttpRequest.responseText);
-                            if (json.login_required) {
-                                return SNBinder.handlers().login(json);
-                            }
-			}
-                        if (retry<3) {
-                            retry++;
-                            _attempt();
-                        } else {
-                            SNBinder.handlers().error("post", url);
-                        }
+                if (isJson) {
+                    callback(json, data);
+                } else {
+                    callback(data);
+                }
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+		var json = null;
+		if(XMLHttpRequest.status == 401 && isJson){
+		    json = SNBinder.evaluate(XMLHttpRequest.responseText);
+                    if (json.login_required) {
+                        return SNBinder.handlers().login(json);
                     }
-                });
-            };
-            _attempt();
-        })();
+		}
+		if (textStatus == 'timeout') {
+		    this.retry++;
+                    if (this.retry < this.retryLimit) {
+			$.ajax(this);
+			return;
+                    }
+		}
+		SNBinder.handlers().error("post", url);
+            }
+        });
     } // end of post
-    evaluate (json) {
-        if (typeof(json) == 'object') {
-            return json;
-        }            
-        try {
-            var obj;
-            eval("obj=" + json);
-            return obj;
-        } catch(err) {
-            alert(err + ":" + json);
-        }
-        return {};
-    }
-    static escape (text) { 
-        return text.replace(/&/g, '&amp;')
-            .replace(/'/g, '&#146;') //'
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br />');
-    }
-    static urlencode (text) {
-	return encodeURIComponent(text);
-    }
     compile (htm) {
         var _templatize = function(htm) {
             return '"' + htm.replace(/\"/g, "'")
@@ -229,7 +194,33 @@ class SNBinder {
         }
         return rows.join('');
     }
-
+    static evaluate (json) {
+        if (typeof(json) == 'object') {
+            return json;
+        }            
+        try {
+            var obj;
+            eval("obj=" + json);
+            return obj;
+        } catch(err) {
+            alert(err + ":" + json);
+        }
+        return {};
+    }
+    static escape (text) { 
+        return text.replace(/&/g, '&amp;')
+            .replace(/'/g, '&#146;') //'
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br />');
+    }
+    static urlencode (text) {
+	return encodeURIComponent(text);
+    }
+    static handlers () {
+	let snbinder = SNBinder.get_instance();
+	return snbinder.handlers();
+    }
     
     static get_instance(_handlers = {}) {
 	if(!instance){
@@ -237,7 +228,12 @@ class SNBinder {
         }
 	return instance;
     }
-    
+    static set_cache(url, data){
+	let snbinder = SNBinder.get_instance();
+	return snbinder.set_cache(url, data);
+    }
+
+    // backward compatibility
     static init (_handlers = {}) {
 	return SNBinder.get_instance(_handlers);
     }
@@ -256,19 +252,6 @@ class SNBinder {
     static bind(htm, data, index) {
 	let snbinder = SNBinder.get_instance();
 	return snbinder.bind(htm, data, index);
-    }
-    static handlers () {
-	let snbinder = SNBinder.get_instance();
-	return snbinder.handlers();
-    }
-
-    static evaluate (json) {
-	let snbinder = SNBinder.get_instance();
-	return snbinder.evaluate(json);
-    }
-    static set_cache(url, data) {
-	let snbinder = SNBinder.get_instance();
-	return snbinder.set_cache(url, data);
     }
 }
 

@@ -115,119 +115,92 @@ var SNBinder = (function () {
                     callback(data);
                 }
             } else {
-                (function (callback) {
-                    var retry = 0;
-                    var _attempt = function _attempt() {
-                        if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
-                            if (retry === 0) {
-                                retry++;
-                                window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
+                if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
+                    window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
+                }
+
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    retry: 0,
+                    retryLimit: 3,
+                    success: function success(data) {
+                        var json = null;
+                        if (isJson) {
+                            json = SNBinder.evaluate(data);
+                            if (json.login_required) {
+                                return SNBinder.handlers().login(json);
+                            }
+                        }
+                        if (options.cache_result) {
+                            SNBinder.set_cache(url, data);
+                        }
+                        if (isJson) {
+                            callback(json, data);
+                        } else {
+                            callback(data);
+                        }
+                    },
+                    error: function error() {
+                        if (textStatus == 'timeout') {
+                            this.retry++;
+                            if (this.retry < this.retryLimit) {
+                                $.ajax(this);
                                 return;
                             }
                         }
-
-                        $.ajax({
-                            type: "GET",
-                            url: url,
-                            success: function success(data) {
-                                var json = null;
-                                if (isJson) {
-                                    json = SNBinder.evaluate(data);
-                                    if (json.login_required) {
-                                        return SNBinder.handlers().login(json);
-                                    }
-                                }
-                                if (options.cache_result) {
-                                    SNBinder.set_cache(url, data);
-                                }
-                                if (isJson) {
-                                    callback(json, data);
-                                } else {
-                                    callback(data);
-                                }
-                            },
-                            error: function error() {
-                                if (retry < 3) {
-                                    retry++;
-                                    _attempt();
-                                } else {
-                                    SNBinder.handlers().error("get", url);
-                                }
-                            }
-                        });
-                    };
-                    _attempt();
-                })(callback);
+                        SNBinder.handlers().error("get", url);
+                    }
+                });
             }
         }
     }, {
         key: "post",
         value: function post(url, params, isJson, callback) {
-            (function () {
-                var retry = 0;
-                var _attempt = function _attempt() {
-                    if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
-                        if (retry === 0) {
-                            retry++;
-                            window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
+            if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
+                window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
+            }
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: jQuery.param(params ? params : {}),
+                retry: 0,
+                retryLimit: 3,
+                success: function success(data) {
+                    var json = null;
+                    if (isJson) {
+                        json = SNBinder.evaluate(data);
+                        if (json.login_required) {
+                            return SNBinder.handlers().login(json);
+                        }
+                    }
+                    if (isJson) {
+                        callback(json, data);
+                    } else {
+                        callback(data);
+                    }
+                },
+                error: function error(XMLHttpRequest, textStatus, errorThrown) {
+                    var json = null;
+                    if (XMLHttpRequest.status == 401 && isJson) {
+                        json = SNBinder.evaluate(XMLHttpRequest.responseText);
+                        if (json.login_required) {
+                            return SNBinder.handlers().login(json);
+                        }
+                    }
+                    if (textStatus == 'timeout') {
+                        this.retry++;
+                        if (this.retry < this.retryLimit) {
+                            $.ajax(this);
                             return;
                         }
                     }
-
-                    $.ajax({
-                        type: "POST",
-                        url: url,
-                        data: jQuery.param(params ? params : {}),
-                        success: function success(data) {
-                            var json = null;
-                            if (isJson) {
-                                json = SNBinder.evaluate(data);
-                                if (json.login_required) {
-                                    return SNBinder.handlers().login(json);
-                                }
-                            }
-                            if (isJson) {
-                                callback(json, data);
-                            } else {
-                                callback(data);
-                            }
-                        },
-                        error: function error(XMLHttpRequest, textStatus, errorThrown) {
-                            var json = null;
-                            if (XMLHttpRequest.status == 401 && isJson) {
-                                json = SNBinder.evaluate(XMLHttpRequest.responseText);
-                                if (json.login_required) {
-                                    return SNBinder.handlers().login(json);
-                                }
-                            }
-                            if (retry < 3) {
-                                retry++;
-                                _attempt();
-                            } else {
-                                SNBinder.handlers().error("post", url);
-                            }
-                        }
-                    });
-                };
-                _attempt();
-            })();
+                    SNBinder.handlers().error("post", url);
+                }
+            });
         } // end of post
 
-    }, {
-        key: "evaluate",
-        value: function evaluate(json) {
-            if ((typeof json === "undefined" ? "undefined" : _typeof(json)) == 'object') {
-                return json;
-            }
-            try {
-                var obj;
-                eval("obj=" + json);
-                return obj;
-            } catch (err) {
-                alert(err + ":" + json);
-            }
-            return {};
-        }
     }, {
         key: "compile",
         value: function compile(htm) {
@@ -255,6 +228,21 @@ var SNBinder = (function () {
             return rows.join('');
         }
     }], [{
+        key: "evaluate",
+        value: function evaluate(json) {
+            if ((typeof json === "undefined" ? "undefined" : _typeof(json)) == 'object') {
+                return json;
+            }
+            try {
+                var obj;
+                eval("obj=" + json);
+                return obj;
+            } catch (err) {
+                alert(err + ":" + json);
+            }
+            return {};
+        }
+    }, {
         key: "escape",
         value: function escape(text) {
             return text.replace(/&/g, '&amp;').replace(/'/g, '&#146;') //'
@@ -266,6 +254,12 @@ var SNBinder = (function () {
             return encodeURIComponent(text);
         }
     }, {
+        key: "handlers",
+        value: function handlers() {
+            var snbinder = SNBinder.get_instance();
+            return snbinder.handlers();
+        }
+    }, {
         key: "get_instance",
         value: function get_instance() {
             var _handlers = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -275,6 +269,15 @@ var SNBinder = (function () {
             }
             return instance;
         }
+    }, {
+        key: "set_cache",
+        value: function set_cache(url, data) {
+            var snbinder = SNBinder.get_instance();
+            return snbinder.set_cache(url, data);
+        }
+
+        // backward compatibility
+
     }, {
         key: "init",
         value: function init() {
@@ -305,24 +308,6 @@ var SNBinder = (function () {
         value: function bind(htm, data, index) {
             var snbinder = SNBinder.get_instance();
             return snbinder.bind(htm, data, index);
-        }
-    }, {
-        key: "handlers",
-        value: function handlers() {
-            var snbinder = SNBinder.get_instance();
-            return snbinder.handlers();
-        }
-    }, {
-        key: "evaluate",
-        value: function evaluate(json) {
-            var snbinder = SNBinder.get_instance();
-            return snbinder.evaluate(json);
-        }
-    }, {
-        key: "set_cache",
-        value: function set_cache(url, data) {
-            var snbinder = SNBinder.get_instance();
-            return snbinder.set_cache(url, data);
         }
     }]);
 
