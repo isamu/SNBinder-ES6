@@ -128,7 +128,7 @@ class SNBinder {
                         callback(data);
                     }
                 },
-                error: function () {
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
 		    if (textStatus == 'timeout') {
 			this.retry++;
 			if (this.retry < this.retryLimit) {
