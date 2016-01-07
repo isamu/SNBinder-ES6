@@ -1,5 +1,6 @@
 class SNModel {
     constructor(data, is_new = true) {
+	this.is_deleted = false
 	this.is_new = is_new;
 	this.data = data;
     }
@@ -57,8 +58,40 @@ class SNModel {
 	}
     }
 
-    destroy () {
-
+    destroy (callback = null) {
+	let url = this.constructor.urls().delete;
+	url = url + "/" + this.data[this.constructor.defined().key];
+	let model = this;
+	let model_data = this.data;
+	this.constructor.template((section) => {
+	    $.ajax({
+		type: "DELETE",
+		url: url,
+		retry : 0,
+		retryLimit: 3,
+		success: function(data) {
+		    let json = SNBinder.evaluate(data);
+		    if (json.login_required) {
+			return SNBinder.handlers().login(json);
+		    }
+		    model.is_deleted = true;
+		    model.data = null;
+		    if (callback) {
+			callback(model_data);
+		    }
+		},
+		error: function (XMLHttpRequest, textStatus, errorThrown) {
+		    if (textStatus == 'timeout') {
+			this.retry++;
+			if (this.retry < this.retryLimit) {
+			    $.ajax(this);
+			    return;
+			}
+		    }
+		    SNBinder.handlers().error("get", url);
+		}
+	    })
+	});
     }
     
     // template file is get from config.

@@ -52,6 +52,10 @@ class App < Sinatra::Base
     {test: "GOOD!"}.to_json
   end
 
+  delete '/api/test/delete/:id' do
+    {result: true}.to_json
+  end
+
   get '/sorry' do
     "😔😔😔"
   end
