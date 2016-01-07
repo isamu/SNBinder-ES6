@@ -12,6 +12,10 @@ TestModel.find({}, function(objects, templates){
 
 	TestModel.create({name: "created"}, (model, template) => {
 	    $("#find").append(template);
+	    let test = new TestModel({name: "new"});
+	    test.save( (model, template) => {
+		$("#find").append(template);
+	    });
 	});
 			
     });

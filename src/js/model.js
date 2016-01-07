@@ -3,8 +3,16 @@ class SNModel {
 	this.is_new = is_new;
 	this.data = data;
     }
-    save() {
+    save(callback) {
+	let _model = this;
 	if (this.is_new) {
+	    this.constructor.create(this.data, (model, template) => {
+		_model.data = model.data;
+		_model.is_new = false;
+		callback(model, template);
+	    });
+	} else {
+	    update(callback);
 	}
     }
 
@@ -29,6 +37,7 @@ class SNModel {
 			    return SNBinder.handlers().login(json);
 			}
 			model.data = json.data;
+			model.is_new = false
 			let template =  SNBinder.bind(section["update"], json.data, 0);
 			
 			callback(model, template);
@@ -83,9 +92,7 @@ class SNModel {
 	return _defined.urls;
     }
     static find(cond, callback) {
-	// let _defined = this.defined();
 	let url = this.urls().find;
-	// SNBinder.get
 	let model = this;
 	this.template((section) => {
             $.ajax({
@@ -119,9 +126,7 @@ class SNModel {
 	});
     }
     static create(data, callback) {
-	// let _defined = this.defined();
 	let url = this.urls().create;
-	// SNBinder.get
 	let model = this;
 	this.template((section) => {
             $.ajax({
