@@ -6,6 +6,22 @@ function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.const
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+/*!
+ * SNBinder JavaScript Library 
+ *
+ * Copyright (c) 2009 Satoshi Nakajima (Twitter: @snakajima, Blog:http://satoshi.blogs.com/uie)
+ * Licensed under the MIT license + "keep this comment block even if you modify it".
+ *
+ * SNBinder-ES6
+ * Copyright (c) 2016 Isamu Arimoto
+ *
+ * History:
+ *  02-12-2010 Created for the project "Entertain LA" (http://entertainla.com)
+ *  01-20-2011 Published as snbinder-0.5.3.js
+ *  01-03-2016 Forked SNBinder-ES6
+ *
+ */
+
 var instance = null;
 var s_templates = null;
 
@@ -141,7 +157,7 @@ var SNBinder = (function () {
                             callback(data);
                         }
                     },
-                    error: function error() {
+                    error: function error(XMLHttpRequest, textStatus, errorThrown) {
                         if (textStatus == 'timeout') {
                             this.retry++;
                             if (this.retry < this.retryLimit) {
@@ -157,51 +173,48 @@ var SNBinder = (function () {
     }, {
         key: "post",
         value: function post(url, params, isJson, callback) {
-            (function () {
-                if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
-                    window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
-                }
-                alert("AA");
+            if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
+                window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
+            }
 
-                $.ajax({
-                    type: "POST",
-                    url: url,
-                    data: jQuery.param(params ? params : {}),
-                    retry: 0,
-                    retryLimit: 3,
-                    success: function success(data) {
-                        var json = null;
-                        if (isJson) {
-                            json = SNBinder.evaluate(data);
-                            if (json.login_required) {
-                                return SNBinder.handlers().login(json);
-                            }
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: jQuery.param(params ? params : {}),
+                retry: 0,
+                retryLimit: 3,
+                success: function success(data) {
+                    var json = null;
+                    if (isJson) {
+                        json = SNBinder.evaluate(data);
+                        if (json.login_required) {
+                            return SNBinder.handlers().login(json);
                         }
-                        if (isJson) {
-                            callback(json, data);
-                        } else {
-                            callback(data);
-                        }
-                    },
-                    error: function error(XMLHttpRequest, textStatus, errorThrown) {
-                        var json = null;
-                        if (XMLHttpRequest.status == 401 && isJson) {
-                            json = SNBinder.evaluate(XMLHttpRequest.responseText);
-                            if (json.login_required) {
-                                return SNBinder.handlers().login(json);
-                            }
-                        }
-                        if (textStatus == 'timeout') {
-                            this.retry++;
-                            if (this.retry < this.retryLimit) {
-                                $.ajax(this);
-                                return;
-                            }
-                        }
-                        SNBinder.handlers().error("post", url);
                     }
-                });
-            })();
+                    if (isJson) {
+                        callback(json, data);
+                    } else {
+                        callback(data);
+                    }
+                },
+                error: function error(XMLHttpRequest, textStatus, errorThrown) {
+                    var json = null;
+                    if (XMLHttpRequest.status == 401 && isJson) {
+                        json = SNBinder.evaluate(XMLHttpRequest.responseText);
+                        if (json.login_required) {
+                            return SNBinder.handlers().login(json);
+                        }
+                    }
+                    if (textStatus == 'timeout') {
+                        this.retry++;
+                        if (this.retry < this.retryLimit) {
+                            $.ajax(this);
+                            return;
+                        }
+                    }
+                    SNBinder.handlers().error("post", url);
+                }
+            });
         } // end of post
 
     }, {
@@ -278,7 +291,6 @@ var SNBinder = (function () {
             var snbinder = SNBinder.get_instance();
             return snbinder.set_cache(url, data);
         }
-
         // backward compatibility
 
     }, {

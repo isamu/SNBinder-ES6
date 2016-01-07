@@ -18,6 +18,36 @@ class App < Sinatra::Base
     {test: "OK!"}.to_json
   end
 
+  get '/api/test/find' do
+    {
+      data: [ 
+        {id: 1, name: "test1"},
+        {id: 2, name: "test2"},
+        {id: 3, name: "test3"},
+        {id: 4, name: "test4"}
+      ]
+    }.to_json
+  end
+
+  post '/api/test/update/:id' do
+    {
+      data: { 
+             id: params[:id],
+             name: params[:name]
+            }
+    }.to_json
+  end
+
+  put '/api/test/create' do
+    p params
+    {
+      data: { 
+             id: 5,
+             name: params[:name]
+            }
+    }.to_json
+  end
+  
   post '/api/test' do
     {test: "GOOD!"}.to_json
   end
