@@ -1,19 +1,23 @@
 {
-  "name": "snbinder",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "babel": "^6.3.26",
-    "babel-cli": "^6.3.17",
-    "babel-preset-es2015": "^6.3.13",
-    "babel-preset-stage-3": "^6.3.13",
-    "gulp": "^3.9.0",
-    "gulp-babel": "^6.1.1"
-  }
+    "name": "snbinder",
+    "version": "0.0.2",
+    "description": "",
+    "scripts": {
+	"test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+	"babel": "^6.3.26",
+	"babel-cli": "^6.3.17",
+	"babel-preset-es2015": "^6.3.13",
+	"babel-preset-stage-3": "^6.3.13",
+	"gulp": "^3.9.0",
+	"gulp-babel": "^6.1.1"
+    },
+    "main": "lib/snbinder.js",
+    "files" : [
+	"lib/snbinder.js",
+	"lib/model.js"
+    ]
 }

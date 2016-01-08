@@ -1,3 +1,11 @@
+/*!
+ * SNModel JavaScript Library 
+ *
+ * Copyright (c) 2016 Isamu Arimoto ( https://about.me/isamu )
+ * Licensed under the MIT license + "keep this comment block even if you modify it".
+ *
+ */
+
 class SNModel {
     constructor(data, is_new = true) {
 	this.is_deleted = false
