@@ -22,7 +22,7 @@ class SNBinder {
 
     constructor (_handlers = {}) {
 	if(!instance){
-	    this.__handlers = Object.assign(this.defalut_handler(), _handlers);
+	    this.__handlers = $.extend(this.defalut_handler(), _handlers);
 	    this.__cache = {};
             instance = this;
         }
@@ -129,6 +129,12 @@ class SNBinder {
                     }
                 },
                 error: function (XMLHttpRequest, textStatus, errorThrown) {
+		    if(XMLHttpRequest.status == 401 && isJson){
+			json = SNBinder.evaluate(XMLHttpRequest.responseText);
+			if (json.login_required) {
+                            return SNBinder.handlers().login(json);
+			}
+		    }
 		    if (textStatus == 'timeout') {
 			this.retry++;
 			if (this.retry < this.retryLimit) {
@@ -141,7 +147,7 @@ class SNBinder {
             });
         }
     }
-    post (url, params, isJson, callback) {
+    post (url, params, isJson, callback, error_callback = null) {
         if (SNBinder.handlers().debug.delay > 0 && SNBinder.handlers().isDebug()) {
 	    window.setTimeout(_attempt, SNBinder.handlers().debug.delay);
         }
@@ -181,7 +187,11 @@ class SNBinder {
 			return;
 		    }
 		}
-		SNBinder.handlers().error("post", url);
+		if (error_callback) {
+		    error_callback(XMLHttpRequest.responseText);
+		} else {
+		    SNBinder.handlers().error("post", url);
+		}
 	    }
         });
     } // end of post

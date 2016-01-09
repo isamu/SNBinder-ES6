@@ -132,38 +132,21 @@ class SNModel {
 	let _defined = this.defined();
 	return _defined.urls;
     }
-    static find(cond, callback) {
+    static find(cond=null, callback) {
 	let url = this.urls().find;
 	let model = this;
 	this.template((section) => {
-            $.ajax({
-		type: "GET",
-		url: url,
-		retry : 0,
-		retryLimit: 3,
-		success: function(data) {
-                    let json = SNBinder.evaluate(data);
-		    if (json.login_required) {
-			return SNBinder.handlers().login(json);
-                    }
-		    var objects = [];
-                    var rows = json.data.map(function(item, key) {
-			objects.push(new model(item, false));
-			return SNBinder.bind(section["find"], item, 0);
-		    });
-                    callback(objects, rows);
-		},
-		error: function (XMLHttpRequest, textStatus, errorThrown) {
-		    if (textStatus == 'timeout') {
-			this.retry++;
-			if (this.retry < this.retryLimit) {
-			    $.ajax(this);
-			    return;
-			}
-		    }
-                    SNBinder.handlers().error("get", url);
-		}
-	    })
+	    SNBinder.get(url, cond, true, (json, data) => {
+		if (json.login_required) {
+		    return SNBinder.handlers().login(json);
+                }
+		var objects = [];
+                var rows = json.data.map(function(item, key) {
+		    objects.push(new model(item, false));
+		    return SNBinder.bind(section["find"], item, 0);
+		});
+                callback(objects, rows);
+	    });
 	});
     }
     static create(data, callback) {
