@@ -96,7 +96,7 @@ class SNBinder {
         if (this.__cache[url]) {
             var data = this.__cache[url];
             if (isJson) {
-                var json = this.evaluate(data);
+                var json = SNBinder.evaluate(data);
                 callback(json, data);
             } else {
                 callback(data);
